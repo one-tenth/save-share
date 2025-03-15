@@ -172,3 +172,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# 忽略 SSL 憑證檔案
+cert.crt
+cert.key
