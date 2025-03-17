@@ -115,10 +115,28 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+import os
 
-STATIC_URL = 'static/'
+# 靜態文件的 URL 路徑（這通常不需要改）
+STATIC_URL = '/static/'
+
+# 指定 Static 檔案的實際存放路徑
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # 讓 Django 知道 `static/` 資料夾在哪裡
+]
+
+# 部署時，收集靜態檔案的目標目錄（適用於 `collectstatic` 指令）
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+#google vision api service
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(BASE_DIR, "invoice-ocr-454015-ab4b53188dbe.json")

@@ -172,3 +172,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# 忽略 Google API 憑證
+service-account.json
+invoice-ocr-*.json
