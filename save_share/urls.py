@@ -20,5 +20,6 @@ from mysite import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('',views.home)
+    path('',views.home),
+    path('ocr/', views.ocr, name='ocr'),
 ]

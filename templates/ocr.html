@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拍照並即時 OCR 解析</title>
+</head>
+<body>
+    <h1>使用相機拍照並即時解析文字</h1>
+
+    <!-- 相機畫面（支援 iPhone） -->
+    <video id="camera" autoplay playsinline muted></video>
+    <br>
+    <button id="capture">📸 拍照</button>
+    <br>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <img id="preview" style="max-width:100%; display:none;">
+    <br>
+
+    <h3>OCR 讀取結果：</h3>
+    <pre id="result"></pre>
+
+    <script>
+        const video = document.getElementById("camera");
+        const canvas = document.getElementById("canvas");
+        const preview = document.getElementById("preview");
+        const captureButton = document.getElementById("capture");
+        const resultDisplay = document.getElementById("result");
+
+        // 啟動相機（支援 iPhone）
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" }
+                });
+                video.srcObject = stream;
+            } catch (error) {
+                alert("⚠️ 無法開啟相機，請確保已允許權限！");
+                console.error("無法開啟相機", error);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            startCamera();
+        });
+
+        // 拍照並上傳
+        captureButton.addEventListener("click", () => {
+            const context = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // 顯示拍照結果
+            preview.src = canvas.toDataURL("image/jpeg");
+            preview.style.display = "block";
+
+            // 將圖片轉為 Blob 上傳
+            canvas.toBlob(blob => {
+                let formData = new FormData();
+                formData.append("image", blob, "captured.jpg");
+
+                fetch("/ocr/upload/", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    resultDisplay.textContent = data.text || data.error;
+                })
+                .catch(error => console.error("上傳失敗", error));
+            }, "image/jpeg");
+        });
+    </script>
+</body>
+</html>
