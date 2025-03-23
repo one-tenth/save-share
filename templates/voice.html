@@ -16,7 +16,12 @@
         const pauseBtn = document.getElementById('pause');
         const textInput = document.getElementById('text-input');
 
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        // 支援不同瀏覽器
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("此瀏覽器不支援語音識別功能，請使用支持的瀏覽器。");
+        }
+        const recognition = new SpeechRecognition();
         recognition.lang = "zh-TW";  // 設定語音識別語言為繁體中文
 
         // 當語音識別開始時
@@ -46,13 +51,21 @@
                 },
                 body: JSON.stringify({ voice_input: transcript })
             })
-            .then(response => response.json())
+            .then(response => response.text())  // 解析 HTML 回應
             .then(data => {
-                alert(data.message);  // 顯示來自後端的訊息
+                // 將返回的 HTML 插入到頁面上
+                document.body.innerHTML = data;
             })
             .catch(error => {
                 console.error('發生錯誤:', error);
+                alert('發送語音資料至後端時發生錯誤。');
             });
+        };
+
+        // 處理語音識別錯誤
+        recognition.onerror = function(event) {
+            console.error('語音識別錯誤:', event.error);
+            alert('語音識別發生錯誤，請再試一次。');
         };
 
         // 開始語音識別
