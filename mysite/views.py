@@ -6,37 +6,40 @@ def home(request):
     return HttpResponse("hello world")
 
 #--------------------------------------
-#ocr
+#ocr   
 import os
-import io
+from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from google.cloud import vision
+from django.shortcuts import render
 from django.conf import settings
+from google.cloud import vision
 
-# 設定 Google API 憑證
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(settings.BASE_DIR, "service-account.json")
+# 設定 Google 憑證（也可搬去 settings.py 統一管理）
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(settings.BASE_DIR, "google-credentials.json")
 
-def extract_text_from_image(image_file):
-    """ 使用 Google Cloud Vision API 解析圖片中的文字（不儲存檔案） """
-    client = vision.ImageAnnotatorClient()
-    
-    # 讀取記憶體中的圖片
-    content = image_file.read()
-    image = vision.Image(content=content)
-    
-    response = client.text_detection(image=image)
-    texts = response.text_annotations
+# 顯示前端頁面
+def show_ocr_page(request):
+    return render(request, 'ocr.html')
 
-    return texts[0].description.strip() if texts else ""
-
+# 接收圖片進行辨識
+@csrf_exempt
 def ocr(request):
-    """ 直接處理圖片並解析文字，不儲存 """
     if request.method == "POST" and request.FILES.get("image"):
-        uploaded_file = request.FILES["image"]
+        image_file = request.FILES["image"]
 
-        # 直接從記憶體處理圖片
-        extracted_text = extract_text_from_image(uploaded_file)
+        try:
+            client = vision.ImageAnnotatorClient()
+            image = vision.Image(content=image_file.read())
+            response = client.text_detection(image=image)
+            texts = response.text_annotations
 
-        return JsonResponse({"text": extracted_text})
-    return render(request,'ocr.html')
-    return JsonResponse({"error": "無效的請求"}, status=400)
+            if texts:
+                return JsonResponse({"text": texts[0].description.strip()})
+            else:
+                return JsonResponse({"text": "❌ 沒有讀取到任何文字"})
+
+        except Exception as e:
+            return JsonResponse({"text": f"❌ 發生錯誤：{str(e)}"})
+
+    return JsonResponse({"error": "❌ 無效的請求，請使用 POST 並附上 image"}, status=400)
+

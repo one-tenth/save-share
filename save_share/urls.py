@@ -21,5 +21,6 @@ from mysite import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',views.home),
-    path('ocr/', views.ocr, name='ocr'),
+    path('ocr/', views.show_ocr_page, name='ocr_page'),     # 顯示相機頁面
+    path('ocr/upload/', views.ocr, name='ocr_api'),         # 接收圖片辨識
 ]

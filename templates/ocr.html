@@ -1,76 +1,106 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>拍照並即時 OCR 解析</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>即時拍照 + OCR</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    video {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 8px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    img {
+      margin-top: 20px;
+      border-radius: 8px;
+    }
+    pre {
+      background: #f7f7f7;
+      padding: 10px;
+      max-width: 90%;
+      margin: 0 auto;
+      text-align: left;
+    }
+  </style>
 </head>
 <body>
-    <h1>使用相機拍照並即時解析文字</h1>
+  <h1>📸 發票即時拍照 + OCR 辨識</h1>
+  
+  <video id="camera" autoplay playsinline muted></video><br />
+  <button id="capture">拍照並辨識</button><br />
+  
+  <canvas id="canvas" style="display: none;"></canvas>
+  <img id="preview" style="max-width: 100%; display: none;" /><br />
 
-    <!-- 相機畫面（支援 iPhone） -->
-    <video id="camera" autoplay playsinline muted></video>
-    <br>
-    <button id="capture">📸 拍照</button>
-    <br>
-    <canvas id="canvas" style="display:none;"></canvas>
-    <img id="preview" style="max-width:100%; display:none;">
-    <br>
+  <h3>辨識結果：</h3>
+  <pre id="result">請拍照辨識發票內容</pre>
 
-    <h3>OCR 讀取結果：</h3>
-    <pre id="result"></pre>
+  <script>
+    const video = document.getElementById("camera");
+    const canvas = document.getElementById("canvas");
+    const preview = document.getElementById("preview");
+    const resultDisplay = document.getElementById("result");
 
-    <script>
-        const video = document.getElementById("camera");
-        const canvas = document.getElementById("canvas");
-        const preview = document.getElementById("preview");
-        const captureButton = document.getElementById("capture");
-        const resultDisplay = document.getElementById("result");
-
-        // 啟動相機（支援 iPhone）
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment" }
-                });
-                video.srcObject = stream;
-            } catch (error) {
-                alert("⚠️ 無法開啟相機，請確保已允許權限！");
-                console.error("無法開啟相機", error);
-            }
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            startCamera();
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" }
         });
+        video.srcObject = stream;
+      } catch (error) {
+        alert("⚠️ 無法啟動相機，請檢查權限");
+        console.error(error);
+      }
+    }
 
-        // 拍照並上傳
-        captureButton.addEventListener("click", () => {
-            const context = canvas.getContext("2d");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    startCamera();
 
-            // 顯示拍照結果
-            preview.src = canvas.toDataURL("image/jpeg");
-            preview.style.display = "block";
+    document.getElementById("capture").addEventListener("click", () => {
+      const ctx = canvas.getContext("2d");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // 將圖片轉為 Blob 上傳
-            canvas.toBlob(blob => {
-                let formData = new FormData();
-                formData.append("image", blob, "captured.jpg");
+      preview.src = canvas.toDataURL("image/jpeg");
+      preview.style.display = "block";
 
-                fetch("/ocr/upload/", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    resultDisplay.textContent = data.text || data.error;
-                })
-                .catch(error => console.error("上傳失敗", error));
-            }, "image/jpeg");
-        });
-    </script>
+      setTimeout(() => {
+        canvas.toBlob(blob => {
+          if (!blob) {
+            resultDisplay.textContent = "⚠️ 圖片轉換失敗，請重試";
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("image", blob, "photo.jpg");
+
+          fetch("/ocr/upload/", {
+            method: "POST",
+            body: formData
+          })
+          .then(res => res.json())
+          .then(data => {
+            resultDisplay.textContent = data.text || "❌ 無法辨識內容";
+          })
+          .catch(err => {
+            resultDisplay.textContent = "❌ 發生錯誤：" + err.message;
+            console.error(err);
+          });
+        }, "image/jpeg");
+      }, 300); // 稍微等一下畫面 render 完
+    });
+  </script>
 </body>
 </html>
