@@ -3,80 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>語音輸入範例</title>
+    <title>語音識別與分類</title>
 </head>
 <body>
 
-    <button id="start">開始語音輸入</button>  <!-- 開始按鈕 -->
-    <button id="pause" disabled>暫停語音識別</button>  <!-- 暫停按鈕，初始時禁用 -->
-    <input type="text" id="text-input" placeholder="說點什麼..." readonly>  <!-- 顯示語音輸入結果 -->
+    <h2>語音輸入分類系統</h2>
+    <button id="start">開始語音輸入</button>
+    <button id="pause" disabled>暫停語音識別</button>
+    <input type="text" id="text-input" placeholder="說點什麼..." readonly>
+    <p id="category">分類結果：</p> <!-- 顯示分類結果 -->
 
     <script>
+        const categoryOutput = document.getElementById('category');
+        const textInput = document.getElementById('text-input');
         const startBtn = document.getElementById('start');
         const pauseBtn = document.getElementById('pause');
-        const textInput = document.getElementById('text-input');
 
-        // 支援不同瀏覽器
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert("此瀏覽器不支援語音識別功能，請使用支持的瀏覽器。");
+            alert("你的瀏覽器不支援語音識別！");
         }
+
         const recognition = new SpeechRecognition();
-        recognition.lang = "zh-TW";  // 設定語音識別語言為繁體中文
+        recognition.lang = "zh-TW"; // 設定語言為繁體中文
+        recognition.continuous = false; // 設定為非連續模式（一次辨識完畢後就停止）
 
-        // 當語音識別開始時
         recognition.onstart = function() {
-            console.log("語音識別已啟動，請開始說話。");
-            startBtn.disabled = true;  // 開始按鈕禁用
-            pauseBtn.disabled = false;  // 啟用暫停按鈕
+            console.log("語音識別已啟動...");
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
         };
 
-        // 當語音識別結束時
         recognition.onend = function() {
-            console.log("語音識別已結束。");
-            startBtn.disabled = false;  // 啟用開始按鈕
-            pauseBtn.disabled = true;   // 禁用暫停按鈕
+            console.log("語音識別已結束");
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
         };
 
-        // 當語音識別有結果時
         recognition.onresult = function(event) {
             const transcript = event.results[0][0].transcript;
-            textInput.value = transcript; // 顯示語音識別的文字
+            textInput.value = transcript;
+            sendVoiceToBackend(transcript); // 發送語音結果到後端
+        };
 
-            // 發送語音識別結果到後端
-            fetch('/voice/', {
-                method: 'POST',
+        function sendVoiceToBackend(transcript) {
+            console.log("準備發送語音內容到後端:", transcript);
+        
+            fetch('/voice/upload/', {
+                method: 'POST', // 確保是 POST
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ voice_input: transcript })
+                body: JSON.stringify({ voice_input: transcript })  // 傳送 JSON 格式的資料
             })
-            .then(response => response.text())  // 解析 HTML 回應
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(`HTTP ${response.status}: ${text}`); });
+                }
+                return response.json();  // 確保解析 JSON
+            })
             .then(data => {
-                // 將返回的 HTML 插入到頁面上
-                document.body.innerHTML = data;
+                console.log("後端回應:", data);
+        
+                // **顯示分類結果**
+                const categoryOutput = document.getElementById('category');
+                if (categoryOutput) {
+                    categoryOutput.innerText = `分類結果: ${data.category || '未知'}`;
+                }
             })
             .catch(error => {
-                console.error('發生錯誤:', error);
-                alert('發送語音資料至後端時發生錯誤。');
+                console.error('發送語音資料至後端時發生錯誤:', error);
+                alert('發送語音資料至後端時發生錯誤，請稍後再試。');
             });
-        };
-
-        // 處理語音識別錯誤
-        recognition.onerror = function(event) {
-            console.error('語音識別錯誤:', event.error);
-            alert('語音識別發生錯誤，請再試一次。');
-        };
-
-        // 開始語音識別
+        }
+        
+        
         startBtn.addEventListener('click', function() {
-            recognition.start(); // 開始語音識別
+            recognition.start();
         });
 
-        // 暫停語音識別
         pauseBtn.addEventListener('click', function() {
-            recognition.stop(); // 停止語音識別
+            recognition.stop();
         });
+
     </script>
 
 </body>

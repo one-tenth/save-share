@@ -21,5 +21,6 @@ from mysite import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',views.home),
-     path('voice/', views.voice, name='voice'),
+     path('voice/', views.voice_page, name='voice_page'),
+      path('voice/upload/', views.voice, name='voice_upload'),
 ]
