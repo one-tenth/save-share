@@ -41,8 +41,16 @@
         };
 
         recognition.onresult = function(event) {
-            const transcript = event.results[0][0].transcript;
-            textInput.value = transcript;
+            let transcript = event.results[0][0].transcript;
+            console.log("語音識別結果:", transcript);
+        
+            // 將數字標準化，例如將「1000000」轉換為「100萬」
+            transcript = transcript.replace(/(\d{6,})/g, (match) => {
+                return `${parseInt(match) / 10000}萬`;
+            });
+        
+            console.log("標準化後的語音內容:", transcript);
+            textInput.value = transcript; // 更新輸入框內容
             sendVoiceToBackend(transcript); // 發送語音結果到後端
         };
 

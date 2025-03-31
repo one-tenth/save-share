@@ -33,6 +33,23 @@ def voice(request):
             # 使用 jieba 進行分詞
             keywords = list(jieba.cut(voice_input))
 
+            # 合併數字與單位
+            combined_keywords = []
+            skip_next = False
+            for i, word in enumerate(keywords):
+                if skip_next:
+                    skip_next = False
+                    continue
+                if word.isdigit() and i + 1 < len(keywords) and keywords[i + 1] in ['萬', '元']:
+                    combined_keywords.append(word + keywords[i + 1])  # 合併數字與單位
+                    skip_next = True
+                elif word.isdigit() and len(word) >= 6:  # 處理「1000000」的情況
+                    combined_keywords.append(f"{int(word) // 10000}萬")
+                else:
+                    combined_keywords.append(word)
+
+            print("分詞結果（合併數字與單位）:", combined_keywords)
+
             # 自訂關鍵字分類邏輯
             categories = {
                 '金融': ['投資', '股票', '銀行', '基金'],
@@ -42,7 +59,7 @@ def voice(request):
 
             classified_category = "未知"
             for category, words in categories.items():
-                if any(word in keywords for word in words):
+                if any(word in combined_keywords for word in words):
                     classified_category = category
                     break
 
@@ -56,3 +73,5 @@ def voice(request):
             return JsonResponse({'error': '無效的 JSON'}, status=400)
 
     return JsonResponse({'error': '請使用 POST 方法發送請求'}, status=405)
+
+
