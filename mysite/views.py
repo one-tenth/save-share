@@ -13,6 +13,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import jieba
+import spacy
 
 @csrf_exempt
 def voice_page(request):#讓json有網頁可以回傳
@@ -48,7 +49,7 @@ def voice(request):
                 else:
                     combined_keywords.append(word)
 
-            print("分詞結果（合併數字與單位）:", combined_keywords)
+            #print("分詞結果（合併數字與單位）:", combined_keywords)
 
             # 自訂關鍵字分類邏輯
             categories = {
@@ -59,7 +60,7 @@ def voice(request):
 
             classified_category = "未知"
             for category, words in categories.items():
-                if any(word in combined_keywords for word in words):
+                if any(keyword in word for word in combined_keywords for keyword in words):
                     classified_category = category
                     break
 
