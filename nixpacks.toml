@@ -3,10 +3,8 @@ nixPkgs = ["python311"]
 
 [phases.build]
 cmds = [
-  "python3 -m ensurepip --upgrade",
-  "pip install --upgrade pip",
-  "pip install -r requirements-lite.txt"
+  "pip3 install -r requirements-lite.txt"
 ]
 
 [phases.start]
-cmd = "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+cmd = "python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8000"
