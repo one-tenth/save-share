@@ -1,0 +1,16 @@
+Django==5.1.5
+djangorestframework==3.15.2
+asgiref==3.8.1
+channels==4.2.0
+channels_redis==4.2.1
+python-dotenv==1.0.1
+python-decouple==3.8
+sqlparse==0.5.3
+pytz==2024.2
+mysqlclient==2.2.4
+requests==2.32.3
+pillow==10.2.0
+python-dateutil==2.9.0.post0
+python-bidi==0.6.3
+PyYAML==6.0.2
+redis==5.2.1
