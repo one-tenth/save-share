@@ -3,7 +3,7 @@ nixPkgs = ["python311"]
 
 [phases.build]
 cmds = [
-  "pip3 install -r requirements-lite.txt"
+  "python3 -m pip install -r requirements-lite.txt"
 ]
 
 [phases.start]
